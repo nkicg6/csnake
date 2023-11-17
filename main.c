@@ -3,6 +3,17 @@
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 
+
+void draw_snake(SDL_Renderer* rend, SDL_Rect rect){
+  SDL_SetRenderDrawColor(rend, 255,255,255,255);
+  SDL_RenderClear(rend);
+  SDL_SetRenderDrawColor(rend, 255,25,255,255);
+  SDL_RenderFillRect(rend, &rect);
+  SDL_RenderDrawRect(rend, &rect);
+  SDL_RenderPresent(rend);
+}
+
+
 //TODO 
 //Create playable window size with grid (min game size), re-size
 //using https://wiki.libsdl.org/SDL2/SDL_GetRendererOutputSize
@@ -42,15 +53,10 @@ int main(void) {
   head.w = 25;
   head.h = 25;
 
-  SDL_SetRenderDrawColor(renderer, 255,255,255,255);
-  SDL_RenderClear(renderer);
-  SDL_SetRenderDrawColor(renderer, 255,25,255,255);
-  SDL_RenderFillRect(renderer, &head);
-  SDL_RenderDrawRect(renderer, &head);
-  SDL_RenderPresent(renderer);
+  draw_snake(renderer, head);
 
   while(!quit){
-    SDL_Delay(250);
+    SDL_Delay(50);
     while (SDL_PollEvent(&event)){
 
       switch (event.type) {
@@ -64,15 +70,23 @@ int main(void) {
               break;
             case SDLK_LEFT:
               printf("Left key\n");
+              head.x -= step_x;
+              draw_snake(renderer, head);
               break;
             case SDLK_RIGHT:
               printf("Right key\n");
-              break;            
+              head.x += step_x;
+              draw_snake(renderer, head);
+              break; 
             case SDLK_UP:
               printf("Up key\n");
+              head.y -= step_y;
+              draw_snake(renderer, head);
               break;            
             case SDLK_DOWN:
               printf("Down key\n");
+              head.y += step_y;
+              draw_snake(renderer, head);
               break;            
             default:
               printf("Unknown key pressed\n");
