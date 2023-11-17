@@ -4,12 +4,12 @@
 #include "SDL2/SDL.h"
 
 
-void draw_snake(SDL_Renderer* rend, SDL_Rect rect){
+void draw_snake(SDL_Renderer* rend, SDL_Rect* rect){
   SDL_SetRenderDrawColor(rend, 255,255,255,255);
   SDL_RenderClear(rend);
   SDL_SetRenderDrawColor(rend, 255,25,255,255);
-  SDL_RenderFillRect(rend, &rect);
-  SDL_RenderDrawRect(rend, &rect);
+  SDL_RenderFillRect(rend, rect);
+  SDL_RenderDrawRect(rend, rect);
   SDL_RenderPresent(rend);
 }
 
@@ -18,6 +18,7 @@ void draw_snake(SDL_Renderer* rend, SDL_Rect rect){
 //Create playable window size with grid (min game size), re-size
 //using https://wiki.libsdl.org/SDL2/SDL_GetRendererOutputSize
 //rest will be score and other info
+//Implement bounds checking, stop and flash boarders when you hit a wall.
 int main(void) {
   int init = SDL_Init(SDL_INIT_EVENTS|SDL_INIT_VIDEO|SDL_INIT_TIMER);
   if (0!=init){
@@ -53,7 +54,7 @@ int main(void) {
   head.w = 25;
   head.h = 25;
 
-  draw_snake(renderer, head);
+  draw_snake(renderer, &head);
 
   while(!quit){
     SDL_Delay(50);
@@ -71,22 +72,22 @@ int main(void) {
             case SDLK_LEFT:
               printf("Left key\n");
               head.x -= step_x;
-              draw_snake(renderer, head);
+              draw_snake(renderer, &head);
               break;
             case SDLK_RIGHT:
               printf("Right key\n");
               head.x += step_x;
-              draw_snake(renderer, head);
+              draw_snake(renderer, &head);
               break; 
             case SDLK_UP:
               printf("Up key\n");
               head.y -= step_y;
-              draw_snake(renderer, head);
+              draw_snake(renderer, &head);
               break;            
             case SDLK_DOWN:
               printf("Down key\n");
               head.y += step_y;
-              draw_snake(renderer, head);
+              draw_snake(renderer, &head);
               break;            
             default:
               printf("Unknown key pressed\n");
