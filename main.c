@@ -12,12 +12,9 @@ typedef enum {
   STOPPED,
 } SnakeMvmtDirection;
 
+
+//take an array of rects, 
 void draw_snake(SDL_Renderer *rend, SDL_Rect *rect){
-  SDL_SetRenderDrawColor(rend, 255,255,255,255);
-  SDL_RenderClear(rend);
-  SDL_SetRenderDrawColor(rend, 255,25,255,255);
-  SDL_RenderFillRect(rend, rect);
-  SDL_RenderDrawRect(rend, rect);
 }
 
 void draw_game(SDL_Renderer *rend, SDL_Rect *rect, int r, int g, int b){
@@ -54,13 +51,18 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
 
-  int head_pos_x = 25;
+  int head_pos_x = 100;
   int head_pos_y = 25;
-  int step_x = 25;
-  int step_y = 25;
+  int step = 5;
 
-  // snake
+  // snake, fixed length for now.
+  int tailLen = 9;
+  SDL_Rect snake[tailLen];
   SDL_Rect head = {.x = head_pos_x, .y = head_pos_y, .w = 25, .h = 25};
+  snake[0] = head;
+  for (int i = 1; i < tailLen; i++){
+    snake[i] = (SDL_Rect){.x = head_pos_x-step*i, .y=head_pos_y, .w=25,.h=25};
+  }
 
   SDL_Rect game_rect = {.x = 25, .y = 0, .w = 600, .h = 480}; 
 
@@ -86,21 +88,37 @@ int main(void) {
           break;
 
         case SDLK_LEFT:
+          if (snake_direction == RIGHT) {
+            printf("Can't turn like that!\n");
+            break;
+          }
           snake_direction = LEFT;
           printf("left button\n");
           break;
 
         case SDLK_RIGHT:
+          if (snake_direction == LEFT) {
+            printf("Can't turn like that!\n");
+            break;
+          }
           snake_direction = RIGHT;
           printf("right button\n");
           break;
 
         case SDLK_UP:
+          if (snake_direction == DOWN) {
+            printf("Can't turn like that!\n");
+            break;
+          }
           snake_direction = UP;
           printf("up button\n");
           break;
 
         case SDLK_DOWN:
+          if (snake_direction == UP) {
+            printf("Can't turn like that!\n");
+            break;
+          }
           snake_direction = DOWN;
           printf("down button\n");
           break;
@@ -117,51 +135,63 @@ int main(void) {
     // update events
     switch(snake_direction){
       case UP:
-        if (head.y-step_y < game_rect.y) {
+        if (snake[0].y-step < game_rect.y) {
           printf("Exceeds bounds\n");
           snake_direction = STOPPED;
           break;
         }
-        head.y -= step_y;
+        snake[0].y -= step;
         break;
 
       case DOWN:
-        if (head.y+head.h+step_y > game_rect.y+game_rect.h){
+        if (snake[0].y+snake[0].h+step > game_rect.y+game_rect.h){
           printf("Exceeds bounds\n");
           snake_direction = STOPPED;
           break;
         }
-        head.y += step_y;
+        snake[0].y += step;
         break;
 
       case LEFT:
-        if (head.x-step_x < game_rect.x){
+        if (snake[0].x-step < game_rect.x){
           printf("Exceeds bounds\n");
           snake_direction = STOPPED;
           break;
         }
-        head.x -= step_x;
+        snake[0].x -= step;
         break;
 
       case RIGHT:
-        if (head.x+head.w+step_x > game_rect.x+game_rect.w){
+        if (snake[0].x+snake[0].w+step > game_rect.x+game_rect.w){
           printf("Exceeds bounds\n");
           snake_direction = STOPPED;
           break;
         }
-        head.x += step_x;
+        snake[0].x += step;
         break;
 
       case STOPPED:
         break;
     }
+    //needs to go in update... 
+    if (snake_direction != STOPPED){
+      for (int i=tailLen-1; i>0; i--){
+        snake[i] = snake[i-1];
+      }
+    }
 
     //render
+
     int cur_delay = SDL_GetTicks() - last_tick;
     if (cur_delay < TARGET_TICK) {
       SDL_Delay(cur_delay);
     }
-    draw_snake(win_renderer, &head);
+    SDL_SetRenderDrawColor(win_renderer, 255,255,255,255);
+    SDL_RenderClear(win_renderer);
+    SDL_SetRenderDrawColor(win_renderer, 255,25,255,255);
+    for (int i=0;i<tailLen;i++){
+      SDL_RenderFillRect(win_renderer, &snake[i]);
+    }
     draw_game(win_renderer, &game_rect, 200, 200, 200);
     SDL_RenderPresent(win_renderer);
     last_tick = SDL_GetTicks();
