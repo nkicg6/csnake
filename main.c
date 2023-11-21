@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 
+//TODO
+//Need a game state struct to simplify drawing and holding objects.
 
 typedef enum {
   UP,
@@ -11,7 +13,6 @@ typedef enum {
   RIGHT,
   STOPPED,
 } SnakeMvmtDirection;
-
 
 //take an array of rects, 
 void draw_snake(SDL_Renderer *rend, SDL_Rect *rect){
@@ -22,6 +23,10 @@ void draw_game(SDL_Renderer *rend, SDL_Rect *rect, int r, int g, int b){
   SDL_RenderDrawRect(rend, rect);
 }
 
+//TODO
+void new_fruit(SDL_Renderer *rend, SDL_Rect *rect) {
+  
+}
 
 const int WIN_WIDTH = 640;
 const int WIN_HEIGHT = 480; 
@@ -51,20 +56,22 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
 
-  int head_pos_x = 100;
+  SDL_Rect game_rect = {.x = 25, .y = 0, .w = 600, .h = 480}; 
+
+  int head_pos_x = game_rect.w/2;
   int head_pos_y = 25;
-  int step = 5;
+  int block_w = 10;
+  int block_h = 10;
+  int step = 10;
 
   // snake, fixed length for now.
-  int tailLen = 9;
+  int tailLen = 19;
   SDL_Rect snake[tailLen];
-  SDL_Rect head = {.x = head_pos_x, .y = head_pos_y, .w = 25, .h = 25};
+  SDL_Rect head = {.x = head_pos_x, .y = head_pos_y, .w = block_w, .h = block_h};
   snake[0] = head;
   for (int i = 1; i < tailLen; i++){
-    snake[i] = (SDL_Rect){.x = head_pos_x-step*i, .y=head_pos_y, .w=25,.h=25};
+    snake[i] = (SDL_Rect){.x = head_pos_x-step*i, .y=head_pos_y, .w=block_w,.h=block_h};
   }
-
-  SDL_Rect game_rect = {.x = 25, .y = 0, .w = 600, .h = 480}; 
 
   SnakeMvmtDirection snake_direction = STOPPED;
 
@@ -80,56 +87,57 @@ int main(void) {
         break;
       }
 
-      switch (event.key.keysym.sym){
-        case SDLK_i:
-          //debug info
-          printf("headx = %d, heady = %d\n", head.x, head.y);
-          printf("game_rect width = %d, game_rect height = %d\n", game_rect.x+game_rect.w, game_rect.y+game_rect.h);
-          break;
-
-        case SDLK_LEFT:
-          if (snake_direction == RIGHT) {
-            printf("Can't turn like that!\n");
+      if (event.type == SDL_KEYDOWN){
+        switch (event.key.keysym.sym){
+          case SDLK_i:
+            //debug info
+            printf("headx = %d, heady = %d\n", snake[0].x, snake[0].y);
             break;
-          }
-          snake_direction = LEFT;
-          printf("left button\n");
-          break;
 
-        case SDLK_RIGHT:
-          if (snake_direction == LEFT) {
-            printf("Can't turn like that!\n");
+          case SDLK_LEFT:
+            if (snake_direction == RIGHT) {
+              printf("Can't turn like that!\n");
+              break;
+            }
+            snake_direction = LEFT;
+            printf("left button\n");
             break;
-          }
-          snake_direction = RIGHT;
-          printf("right button\n");
-          break;
 
-        case SDLK_UP:
-          if (snake_direction == DOWN) {
-            printf("Can't turn like that!\n");
+          case SDLK_RIGHT:
+            if (snake_direction == LEFT) {
+              printf("Can't turn like that!\n");
+              break;
+            }
+            snake_direction = RIGHT;
+            printf("right button\n");
             break;
-          }
-          snake_direction = UP;
-          printf("up button\n");
-          break;
 
-        case SDLK_DOWN:
-          if (snake_direction == UP) {
-            printf("Can't turn like that!\n");
+          case SDLK_UP:
+            if (snake_direction == DOWN) {
+              printf("Can't turn like that!\n");
+              break;
+            }
+            snake_direction = UP;
+            printf("up button\n");
             break;
-          }
-          snake_direction = DOWN;
-          printf("down button\n");
-          break;
 
-        case SDLK_SPACE:
-          snake_direction = STOPPED;
-          printf("pause\n");
-          break;
+          case SDLK_DOWN:
+            if (snake_direction == UP) {
+              printf("Can't turn like that!\n");
+              break;
+            }
+            snake_direction = DOWN;
+            printf("down button\n");
+            break;
 
-        default:
-          break;
+          case SDLK_SPACE:
+            snake_direction = STOPPED;
+            printf("pause\n");
+            break;
+
+          default:
+            break;
+        }
       }
     }
     // update events
