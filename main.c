@@ -23,6 +23,7 @@ void new_fruit(SDL_Renderer *rend, SDL_Rect *rect) {
 
 }
 
+const int TARGET_TICK = 1000/30;
 const int MVMT_SPEED_MS = 50; // rate of movement update. Lower is faster
 const int WIN_WIDTH = 640;
 const int WIN_HEIGHT = 640; 
@@ -31,6 +32,8 @@ const int GAME_HEIGHT = 500;
 const int GAME_POS_X = 20;
 const int GAME_POS_Y = 20;
 const int STEP_SIZE = 10;
+
+const int GRID_N = ((GAME_WIDTH+GAME_POS_X)/STEP_SIZE)-1;
 
 int main(void) {
   if (0!=SDL_Init(SDL_INIT_EVENTS|SDL_INIT_VIDEO|SDL_INIT_TIMER)){
@@ -73,12 +76,21 @@ int main(void) {
   for (int i = 1; i < tailLen; i++){
     snake[i] = (SDL_Rect){.x = head_start_pos_x-STEP_SIZE*i, .y=head_start_pos_y, .w=STEP_SIZE,.h=STEP_SIZE};
   }
+
+  SDL_Rect grid[GRID_N];
+
+  for (int i=0,x=GAME_POS_X; i < GRID_N-1; i++){
+    grid[i] = (SDL_Rect){.x=x, .y=GAME_POS_Y, .w=STEP_SIZE, .h=STEP_SIZE};
+    x= x+STEP_SIZE;
+  }
+
   SnakeMvmtDirection snake_direction = STOPPED;
   SnakeMvmtDirection state = OK;
   bool quit = false;
   int next_move_time = SDL_GetTicks() + MVMT_SPEED_MS;
 
   while(!quit){
+    int last_tick = SDL_GetTicks();
     while (SDL_PollEvent(&event)){
       if (event.type == SDL_QUIT || event.key.keysym.sym == SDLK_q){
         printf("Quit event\n");
@@ -158,7 +170,6 @@ int main(void) {
 
         case DOWN:
           if (snake[0].y+snake[0].h+STEP_SIZE > game_rect.y+game_rect.h){
-            printf("Exceeds bounds\n");
             snake_direction = STOPPED;
             break;
           }
@@ -171,7 +182,6 @@ int main(void) {
 
         case LEFT:
           if (snake[0].x-STEP_SIZE < game_rect.x){
-            printf("Exceeds bounds, game rect x = %d, next STEP_SIZE: %d\n", game_rect.x, snake[0].x-STEP_SIZE);
             snake_direction = STOPPED;
             break;
           }
@@ -203,15 +213,19 @@ int main(void) {
           break;
       }
       //render
-
+      int cur_delay = SDL_GetTicks() - last_tick;
+      if (cur_delay < TARGET_TICK) {
+        SDL_Delay(cur_delay);
+      }
+      //fn to draw based on game struct with all shapes
       SDL_SetRenderDrawColor(win_renderer, 255,255,255,255);
       SDL_RenderClear(win_renderer);
       SDL_SetRenderDrawColor(win_renderer, 0,255,0,255);
       SDL_RenderFillRect(win_renderer, &snake[0]);
       SDL_SetRenderDrawColor(win_renderer, 255,25,255,100);
-      for (int i=1;i<tailLen;i++){
-        SDL_RenderFillRect(win_renderer, &snake[i]);
-      }
+      SDL_RenderFillRects(win_renderer, &snake[1], tailLen-1); 
+      SDL_SetRenderDrawColor(win_renderer, 200,200,200,100);
+      SDL_RenderDrawRects(win_renderer, grid, GRID_N);
       draw_game(win_renderer, &game_rect, 200, 200, 200);
       SDL_RenderPresent(win_renderer);
       next_move_time = SDL_GetTicks() + MVMT_SPEED_MS;
