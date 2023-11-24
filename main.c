@@ -3,26 +3,6 @@
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 
-typedef enum {
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT,
-  STOPPED,
-  OK,
-  BOUNDARY,
-} SnakeMvmtDirection;
-
-void draw_game(SDL_Renderer *rend, SDL_Rect *rect, int r, int g, int b){
-  SDL_SetRenderDrawColor(rend, r, g, b, 255);
-  SDL_RenderDrawRect(rend, rect);
-}
-
-//TODO
-void new_fruit(SDL_Renderer *rend, SDL_Rect *rect) {
-
-}
-
 const int TARGET_TICK = 1000/30;
 const int MVMT_SPEED_MS = 50; // rate of movement update. Lower is faster
 const int WIN_WIDTH = 640;
@@ -35,7 +15,48 @@ const int STEP_SIZE = 10;
 
 const int GRID_N = ((GAME_WIDTH+GAME_POS_X)/STEP_SIZE)-1;
 
+typedef enum {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT,
+  STOPPED,
+  OK,
+  BOUNDARY,
+} SnakeMvmtDirection;
+
+typedef struct {
+  SDL_Rect *snake;
+  SDL_Window *window;
+  SDL_Renderer *win_renderer;
+  int Head_x;
+  int Head_y;
+  int Fruit_x;
+  int Fruit_y;
+  int Grid_n;
+  int Step_size;
+  SnakeMvmtDirection State;
+} Game;
+
+
+void draw_game(SDL_Renderer *rend, SDL_Rect *rect, int r, int g, int b){
+  SDL_SetRenderDrawColor(rend, r, g, b, 255);
+  SDL_RenderDrawRect(rend, rect);
+}
+
+//TODO
+void new_fruit(SDL_Renderer *rend, SDL_Rect grid[][GRID_N], int max_x, int max_y) {
+  int x = rand() % (max_x - 1);
+  int y = rand() % (max_y - 1);
+  //ensure doesn't appear in the snake
+  SDL_Rect r = grid[x][y]; 
+  SDL_SetRenderDrawColor(rend, 255,0,255,255);
+  SDL_RenderFillRect(rend, &r);
+}
+
 int main(void) {
+  //Game game = make_game();
+
   if (0!=SDL_Init(SDL_INIT_EVENTS|SDL_INIT_VIDEO|SDL_INIT_TIMER)){
     printf("Failed to start SDL, error: %s\n", SDL_GetError());
     exit(EXIT_FAILURE);
@@ -77,10 +98,13 @@ int main(void) {
     snake[i] = (SDL_Rect){.x = head_start_pos_x-STEP_SIZE*i, .y=head_start_pos_y, .w=STEP_SIZE,.h=STEP_SIZE};
   }
 
-  SDL_Rect grid[GRID_N];
+  SDL_Rect grid[GRID_N][GRID_N];
 
   for (int i=0,x=GAME_POS_X; i < GRID_N-1; i++){
-    grid[i] = (SDL_Rect){.x=x, .y=GAME_POS_Y, .w=STEP_SIZE, .h=STEP_SIZE};
+    for (int j=0,y=GAME_POS_Y; j < GRID_N-1; j++){
+      grid[i][j] = (SDL_Rect){.x=x, .y=y, .w=STEP_SIZE, .h=STEP_SIZE};
+      y = y+STEP_SIZE;
+    }
     x= x+STEP_SIZE;
   }
 
@@ -197,6 +221,7 @@ int main(void) {
           if (snake[0].x+snake[0].w+STEP_SIZE> game_rect.x+game_rect.w){
             printf("Exceeds bounds\n");
             snake_direction = STOPPED;
+            state = BOUNDARY;
             break;
           }
 
@@ -225,11 +250,14 @@ int main(void) {
       SDL_SetRenderDrawColor(win_renderer, 255,25,255,100);
       SDL_RenderFillRects(win_renderer, &snake[1], tailLen-1); 
       SDL_SetRenderDrawColor(win_renderer, 200,200,200,100);
-      SDL_RenderDrawRects(win_renderer, grid, GRID_N);
+      SDL_RenderDrawRects(win_renderer, *grid, GRID_N*GRID_N);
       draw_game(win_renderer, &game_rect, 200, 200, 200);
+      if (state == BOUNDARY){
+        new_fruit(win_renderer, grid, GRID_N,GRID_N);
+      }
       SDL_RenderPresent(win_renderer);
+      //Snake movement speed
       next_move_time = SDL_GetTicks() + MVMT_SPEED_MS;
-
       //uncomment for single step movemnet for debug
       //snake_direction = STOPPED;
     }
