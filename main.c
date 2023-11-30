@@ -7,11 +7,12 @@
 #define GAME_SIZE 600
 #define GAME_X 20
 #define GAME_Y 20
-#define STEP_SIZE 10
+#define STEP_SIZE 20
 #define MVMT_SPEED 50
 #define REFRESH_RATE 1000/15
 #define MAX_SNAKE_LEN 500
 #define INIT_SIZE 15
+#define BLOCK_SCORE 10
 
 enum State {
   PAUSED,
@@ -34,6 +35,7 @@ struct Game {
   int snake_len;
   int head_x;
   int head_y;
+  int score;
   enum State state;
   SDL_Rect game_rect;
   SDL_Rect fruit;
@@ -75,6 +77,9 @@ SDL_Rect make_fruit(struct Game *g){
 }
 
 void grow_snake(struct Game *g){
+  g->score += BLOCK_SCORE;
+  printf("Score = %d\n", g->score);
+  printf("Snake len = %d\n", g->snake_len);
   if (g->snake_len < MAX_SNAKE_LEN){
     g->body[g->snake_len++] = g->fruit;
     g->fruit = make_fruit(g);
@@ -180,6 +185,7 @@ struct Game init(void){
     .step=STEP_SIZE,
     .game_rect=(SDL_Rect){.x=GAME_X, .y=GAME_Y, .h=GAME_SIZE, .w=GAME_SIZE},
     .state=PAUSED,
+    .score=0,
     .mvmt_speed=MVMT_SPEED,
     .max_len=MAX_SNAKE_LEN,
     .snake_len=INIT_SIZE,
@@ -203,6 +209,7 @@ int main(void){
     puts("Failed to init SDL");
     exit(EXIT_FAILURE);
   }
+
   struct Game game = init();
   SDL_bool quit = SDL_FALSE;
   SDL_Event event;
@@ -217,39 +224,39 @@ int main(void){
         printf("Quit event\n");
         quit = SDL_TRUE;
         break;
-      }
-      if (event.type == SDL_KEYDOWN){
-        switch (event.key.keysym.sym){
-          case SDLK_i:
-            puts("DEBUG:");
-            printf("Head x,y: %d, %d, \n", game.head_x, game.head_y); 
-            break;
-          case SDLK_RIGHT:
-            puts("right");
-            next_state = MOVE_RIGHT;
-            break;
-          case SDLK_LEFT:
-            puts("left");
-            next_state=MOVE_LEFT;
-            break;
-          case SDLK_UP:
-            puts("up");
-            next_state=MOVE_UP;
-            break;
-          case SDLK_DOWN:
-            puts("down");
-            next_state=MOVE_DOWN;
-            break;
-          case SDLK_r:
-            puts("Reset key");
-            if (game.state == CONTACT){
-              game = init();
-              game.state = PAUSED;
+      } else {
+        if (event.type == SDL_KEYDOWN){
+          switch (event.key.keysym.sym){
+            case SDLK_SPACE:
+              puts("Paused, press an arrow key to continue");
               next_state = PAUSED;
-            } 
-            break;
-          default:
-            break;
+              break;
+            case SDLK_i:
+              puts("DEBUG:");
+              printf("Head x,y: %d, %d, \n", game.head_x, game.head_y); 
+              break;
+            case SDLK_RIGHT:
+              next_state = MOVE_RIGHT;
+              break;
+            case SDLK_LEFT:
+              next_state=MOVE_LEFT;
+              break;
+            case SDLK_UP:
+              next_state=MOVE_UP;
+              break;
+            case SDLK_DOWN:
+              next_state=MOVE_DOWN;
+              break;
+            case SDLK_r:
+              if (game.state == CONTACT){
+                game = init();
+                game.state = PAUSED;
+                next_state = PAUSED;
+              } 
+              break;
+            default:
+              break;
+          }
         }
       }
     }
